@@ -69,6 +69,9 @@ Kit_Player* Kit_CreatePlayer(const Kit_Source *src) {
         goto error;
     }
 
+    // Set SRC locally
+    player->src = src;
+
     return player;
 
 error:

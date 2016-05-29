@@ -217,7 +217,7 @@ void Kit_GetAudioDecoderInfo(Kit_DecoderThread *thread, Kit_AudioFormat *format)
 }
 
 int Kit_GetAudioDecoderData(Kit_DecoderThread *thread, double clock_sync, unsigned char *buffer, int length, int cur_buf_len) {
-    assert(player != NULL);
+    //assert(player != NULL);
     assert(buffer != NULL);
 
     // Read a packet from buffer, if one exists. Stop here if not.

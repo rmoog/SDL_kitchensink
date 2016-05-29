@@ -61,7 +61,7 @@ Kit_DemuxThread* Kit_CreateDemuxThread(
     const Kit_Source *src,
     Kit_DecoderThread *video_thread,
     Kit_DecoderThread *audio_thread,
-    Kit_DecoderThread *subtitle_thread) 
+    Kit_DecoderThread *subtitle_thread)
 {
     assert(src != NULL);
 
@@ -73,6 +73,12 @@ Kit_DemuxThread* Kit_CreateDemuxThread(
         goto error;
     }
 
+    demux->video_thread = video_thread;
+    demux->audio_thread = audio_thread;
+    demux->subtitle_thread = subtitle_thread;
+    demux->src = src;
+
+    // Start up the demuxer thread
     SDL_AtomicSet(&demux->state, KIT_DEMUXTHREAD_RUNNING);
     demux->thread = SDL_CreateThread(_DemuxThread, NULL, demux);
     if(demux->thread == NULL) {
@@ -80,10 +86,6 @@ Kit_DemuxThread* Kit_CreateDemuxThread(
         goto error;
     }
 
-    demux->video_thread = video_thread;
-    demux->audio_thread = audio_thread;
-    demux->subtitle_thread = subtitle_thread;
-    demux->src = src;
     return demux;
 
 error:

@@ -137,6 +137,13 @@ Kit_DecoderThread* Kit_CreateDecoderThread(
         goto failure_3;
     }
 
+    // Set the rest of the args
+    dst->handler_cb = handler_cb;
+    dst->free_cb = free_cb;
+    dst->local = local;
+    dst->stream_index = stream_index;
+    dst->stream = stream;
+
     // Create the decoder thread.
     SDL_AtomicSet(&dst->state, KIT_DECTHREAD_RUNNING);
     dst->thread = SDL_CreateThread(_DecoderThread, NULL, dst);
@@ -145,11 +152,6 @@ Kit_DecoderThread* Kit_CreateDecoderThread(
         goto failure_3;
     }
 
-    dst->handler_cb = handler_cb;
-    dst->free_cb = free_cb;
-    dst->local = local;
-    dst->stream_index = stream_index;
-    dst->stream = stream;
     return dst;
 
 failure_3:
@@ -219,7 +221,6 @@ static int _ThreadWrite(int num, Kit_DecoderThread *thread, void *packet) {
 
 static int _ThreadRead(int num, Kit_DecoderThread *thread, void **packet) {
     assert(thread != NULL);
-    assert(packet != NULL);
 
     int ret = 0;
     if(SDL_LockMutex(thread->locks[num]) == 0) {

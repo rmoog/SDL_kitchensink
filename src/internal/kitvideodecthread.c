@@ -1,15 +1,16 @@
-#include "kitchensink/internal/kitvideodecthread.h"
 #include "kitchensink/internal/kitdecthread.h"
 #include "kitchensink/internal/kitavutils.h"
 #include "kitchensink/internal/kitringbuffer.h"
 #include "kitchensink/internal/kitbuffer.h"
 #include "kitchensink/kitformats.h"
 #include "kitchensink/kiterror.h"
+#include "kitchensink/internal/kitvideodecthread.h"
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <libavutil/avstring.h>
+#include <libavutil/imgutils.h>
 
 #include <stdlib.h>
 #include <assert.h>
@@ -64,7 +65,7 @@ static double _GetPacketPTS(void *ptr) {
 static int _HandleVideoPacket(Kit_DecoderThread *thread, void *local) {
     assert(thread != NULL);
     assert(local != NULL);
-    
+
     int frame_finished = 0;
     AVPacket *packet = NULL;
     Kit_VideoDecThread *vthread = local;
@@ -85,9 +86,13 @@ static int _HandleVideoPacket(Kit_DecoderThread *thread, void *local) {
         if(frame_finished) {
             // Target frame
             AVFrame *oframe = av_frame_alloc();
-            oframe->width = thread->codec_ctx->width;
-            oframe->height = thread->codec_ctx->height;
-            oframe->format = Kit_FindAVPixelFormat(vthread->format.format);
+            av_image_alloc(
+                oframe->data,
+                oframe->linesize,
+                thread->codec_ctx->width,
+                thread->codec_ctx->height,
+                Kit_FindAVPixelFormat(vthread->format.format),
+                1);
 
             // Scale from source format to target format, don't touch the size
             sws_scale(
@@ -153,7 +158,7 @@ Kit_DecoderThread* Kit_CreateVideoDecoderThread(const Kit_Source *src, int strea
         free(vdec);
         return NULL;
     }
-    
+
     // Create a temporary frame
     vdec->tmp_frame = av_frame_alloc();
     if(vdec->tmp_frame == NULL) {
@@ -238,11 +243,11 @@ int Kit_GetVideoDecoderData(Kit_DecoderThread *thread, double clock_sync, SDL_Te
         || vthread->format.format == SDL_PIXELFORMAT_IYUV)
     {
         SDL_UpdateYUVTexture(
-            texture, NULL, 
+            texture, NULL,
             packet->frame->data[0], packet->frame->linesize[0],
             packet->frame->data[1], packet->frame->linesize[1],
             packet->frame->data[2], packet->frame->linesize[2]);
-    } 
+    }
     else {
         SDL_UpdateTexture(
             texture, NULL,
