@@ -81,3 +81,17 @@ int Kit_IsBufferFull(const Kit_Buffer *buffer) {
     int k = (len >= buffer->size);
     return k;
 }
+
+int Kit_IsBufferEmpty(const Kit_Buffer *buffer) {
+    int len = buffer->write_p - buffer->read_p;
+    return (len == 0);
+}
+
+Kit_BufferState Kit_GetBufferState(const Kit_Buffer *buffer) {
+    int len = buffer->write_p - buffer->read_p;
+    if(len == 0)
+        return KIT_BUFFER_EMPTY;
+    if(len >= buffer->size)
+        return KIT_BUFFER_FULL;
+    return KIT_BUFFER_PARTIALLY_FILLED;
+}

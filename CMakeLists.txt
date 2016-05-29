@@ -36,6 +36,24 @@ include_directories(
 )
 
 FILE(GLOB SOURCES "src/*.c")
+
+set(SOURCES
+    src/internal/kitbuffer.c
+    src/internal/kitdecthread.c
+    src/internal/kitdemuxthread.c
+    src/internal/kitlibstate.c
+    src/internal/kitlist.c
+    src/internal/kitringbuffer.c
+    src/internal/kitavutils.c
+    src/internal/kitvideodecthread.c
+    src/internal/kitaudiodecthread.c
+    src/kiterror.c
+    src/kitlib.c
+    src/kitplayer.c
+    src/kitsource.c
+    src/kitutils.c
+)
+
 FILE(GLOB HEADERS "include/kitchensink/*.h")
 
 add_library(SDL_kitchensink SHARED ${SOURCES})
