@@ -129,6 +129,8 @@ static int _HandleAudioPacket(Kit_DecoderThread *thread, void *local) {
                 player->seek_flag = 0;
             }*/
 
+            fprintf(stderr, "Audio: Got here!\n");
+
             // Lock, write to audio buffer, unlock
             Kit_AudioPacket *apacket = _CreateAudioPacket((char*)dst_data[0], (size_t)dst_bufsize, pts);
             if(Kit_ThreadWriteOutput(thread, apacket) != 0) {
@@ -141,6 +143,7 @@ static int _HandleAudioPacket(Kit_DecoderThread *thread, void *local) {
 
         packet->size -= len;
         packet->data += len;
+        fprintf(stderr, "Audio: Handled %d, left %d\n", len, packet->size);
     }
     _FreeAVPacket(packet);
     return 0;
@@ -226,9 +229,13 @@ int Kit_GetAudioDecoderData(Kit_DecoderThread *thread, double clock_sync, unsign
     Kit_AudioPacket *n_packet = NULL;
     Kit_AudioDecThread *athread = thread->local;
 
+    fprintf(stderr, "Audio: Attempting to get data 0\n");
+
     if(Kit_ThreadPeekOutput(thread, (void**)&packet) == 1) {
         return 0;
     }
+
+    fprintf(stderr, "Audio: Attempting to get data 1\n");
 
     int bytes_per_sample = athread->format.bytes * athread->format.channels;
     double bps = bytes_per_sample * athread->format.samplerate;
@@ -268,6 +275,8 @@ int Kit_GetAudioDecoderData(Kit_DecoderThread *thread, double clock_sync, unsign
         }
     }
 
+    fprintf(stderr, "Audio: Attempting to get data 2\n");
+
     if(length > 0) {
         ret = Kit_ReadRingBuffer(packet->rb, (char*)buffer, length);
     }
@@ -280,6 +289,7 @@ int Kit_GetAudioDecoderData(Kit_DecoderThread *thread, double clock_sync, unsign
         packet->pts += adjust;
     }
 
+    fprintf(stderr, "Audio: Attempting to get data 3\n");
 
     return ret;
 }

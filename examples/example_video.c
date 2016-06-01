@@ -294,6 +294,8 @@ int main(int argc, char *argv[]) {
         int limit = (pinfo.video.height / 3) * 2; 
         gui_enabled = (mouse_y >= limit);
 
+        fprintf(stderr, "main: handle audio\n");
+
         // Refresh audio
         if(SDL_GetQueuedAudioSize(audio_dev) < AUDIOBUFFER_SIZE) {
             int need = AUDIOBUFFER_SIZE - ret;
@@ -316,6 +318,8 @@ int main(int argc, char *argv[]) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
+        fprintf(stderr, "main: handle video\n");
+
         // Refresh videotexture and render it
         Kit_GetVideoData(player, video_tex);
         SDL_RenderCopy(renderer, video_tex, NULL, NULL);
@@ -326,6 +330,8 @@ int main(int argc, char *argv[]) {
             double percent = Kit_GetPlayerPosition(player) / Kit_GetPlayerDuration(player);
             render_gui(renderer, percent);
         }
+
+        fprintf(stderr, "main: present\n");
 
         // Render to screen + wait for vsync
         SDL_RenderPresent(renderer);
