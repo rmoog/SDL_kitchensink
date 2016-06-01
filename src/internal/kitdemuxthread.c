@@ -29,8 +29,6 @@ static int _DemuxThread(void *data) {
             continue;
         }
 
-        fprintf(stderr, "Demuxing ...\n");
-
         // Read packet from demuxer
         packet = malloc(sizeof(AVPacket));
         if(av_read_frame(format_ctx, packet) < 0) {
@@ -44,23 +42,22 @@ static int _DemuxThread(void *data) {
             && packet->stream_index == thread->video_thread->stream_index)
         {
             Kit_ThreadWriteInput(thread->video_thread, packet);
-            fprintf(stderr, "Write packet to video input\n");
         }
         else if(thread->audio_thread != NULL
             && packet->stream_index == thread->audio_thread->stream_index)
         {
             Kit_ThreadWriteInput(thread->audio_thread, packet);
-            fprintf(stderr, "Write packet to audio input\n");
         }
-        else if(thread->subtitle_thread != NULL
+        /*else if(thread->subtitle_thread != NULL
             && packet->stream_index == thread->subtitle_thread->stream_index)
         {
             Kit_ThreadWriteInput(thread->subtitle_thread, packet);
-            fprintf(stderr, "Write packet to subtitle input\n");
+        }*/
+        else {
+            av_packet_unref(packet);
+            free(packet);
         }
     }
-
-    fprintf(stderr, "Demux Thread done.\n");
 
     return 0;
 }

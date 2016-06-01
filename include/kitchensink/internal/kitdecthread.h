@@ -29,7 +29,7 @@ struct Kit_DecoderThread {
     AVCodecContext *codec_ctx;
     AVStream *stream; // A copy, no need to free
     int stream_index;
-    
+
     // Local data and callbacks
     void *local;
     Kit_ThreadHandler handler_cb;
@@ -48,6 +48,7 @@ KIT_LOCAL Kit_DecoderThread* Kit_CreateDecoderThread(
     Kit_ThreadFree free_cb,
     void *local);
 KIT_LOCAL void Kit_FreeDecoderThread(Kit_DecoderThread **thread);
+KIT_LOCAL void Kit_PrepareFreeDecoderThread(Kit_DecoderThread **thread_ptr);
 
 KIT_LOCAL int Kit_ThreadWriteInput(Kit_DecoderThread *thread, void *packet);
 KIT_LOCAL int Kit_ThreadReadInput(Kit_DecoderThread *thread, void **packet);

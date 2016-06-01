@@ -116,7 +116,6 @@ static int _HandleVideoPacket(Kit_DecoderThread *thread, void *local) {
                 player->clock_sync = Kit_GetSystemTime() - pts;
                 player->seek_flag = 0;
             }*/
-            fprintf(stderr, "Video: Got here!\n");
 
             // Lock, write to audio buffer, unlock
             Kit_VideoPacket *vpacket = _CreateVideoPacket(oframe, pts);
@@ -126,7 +125,6 @@ static int _HandleVideoPacket(Kit_DecoderThread *thread, void *local) {
         }
         packet->size -= len;
         packet->data += len;
-        fprintf(stderr, "Video: Handled %d, left %d\n", len, packet->size);
     }
     _FreeAVPacket(packet);
     return 0;
@@ -148,7 +146,7 @@ Kit_DecoderThread* Kit_CreateVideoDecoderThread(const Kit_Source *src, int strea
         stream_index, // Stream index we are playing
         _FreeAVPacket, // For freeing the input buffer AVPackets
         _FreeVideoPacket, // For freeing the output buffer frames
-        2, // Input buffer size
+        16, // Input buffer size
         2, // Output buffer size (in frames; these may be LARGE)
         _GetPacketPTS, // for getting a Presentation TimeStamp from a packet
         _HandleVideoPacket, // Function for decoding video packets
@@ -210,13 +208,9 @@ int Kit_GetVideoDecoderData(Kit_DecoderThread *thread, double clock_sync, SDL_Te
     Kit_VideoPacket *packet = NULL;
     Kit_VideoPacket *n_packet = NULL;
 
-    fprintf(stderr, "Video: Attempting to get data 0\n");
-
     if(Kit_ThreadPeekOutput(thread, (void**)&packet) == 1) {
         return 0;
     }
-
-    fprintf(stderr, "Video: Attempting to get data 1\n");
 
     // Print some data
     double cur_video_ts = Kit_GetSystemTime() - clock_sync;
@@ -240,12 +234,8 @@ int Kit_GetVideoDecoderData(Kit_DecoderThread *thread, double clock_sync, SDL_Te
         }
     }
 
-    fprintf(stderr, "Video: Attempting to get data 2\n");
-
     // Advance buffer one frame forwards
     Kit_ThreadAdvanceOutput(thread);
-
-    fprintf(stderr, "Video: Attempting to get data 3\n");
 
     // Update textures as required. Handle UYV frames separately.
     if(vthread->format.format == SDL_PIXELFORMAT_YV12
@@ -264,10 +254,7 @@ int Kit_GetVideoDecoderData(Kit_DecoderThread *thread, double clock_sync, SDL_Te
             packet->frame->linesize[0]);
     }
 
-    fprintf(stderr, "Video: Attempting to get data 4\n");
-
     _FreeVideoPacket(packet);
-
 
     return 0;
 }

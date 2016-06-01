@@ -47,8 +47,6 @@ static int _DecoderThread(void *ptr) {
         ret = thread->handler_cb(thread, thread->local);
     }
 
-    fprintf(stderr, "Dec Thread done.\n");
-
     return 0;
 }
 
@@ -170,6 +168,23 @@ failure_0:
     return NULL;
 }
 
+void Kit_PrepareFreeDecoderThread(Kit_DecoderThread **thread_ptr) {
+    if(thread_ptr == NULL) return;
+    if(*thread_ptr == NULL) return;
+    Kit_DecoderThread *thread = *thread_ptr;
+
+    // Set thread state as closing
+    SDL_AtomicSet(&thread->state, KIT_DECTHREAD_CLOSING);
+
+    // Signal all conditions
+    for(int i = 0; i < 2; i++) {
+        if(SDL_LockMutex(thread->locks[i]) == 0) {
+            SDL_CondBroadcast(thread->conditions[i]);
+            SDL_UnlockMutex(thread->locks[i]);
+        }
+    }
+}
+
 void Kit_FreeDecoderThread(Kit_DecoderThread **thread_ptr) {
     if(thread_ptr == NULL) return;
     if(*thread_ptr == NULL) return;
@@ -213,10 +228,8 @@ static int _ThreadWrite(int num, Kit_DecoderThread *thread, void *packet) {
     int ret = 0;
     if(SDL_LockMutex(thread->locks[num]) == 0) {
         if(Kit_GetBufferState(thread->buffers[num]) == KIT_BUFFER_FULL) {
-            fprintf(stderr, "KIT_BUFFER_FULL; waiting for %d\n", num);
             SDL_CondWait(thread->conditions[num], thread->locks[num]);
         }
-        fprintf(stderr, "writing to %d\n", num);
         ret = Kit_WriteBuffer(thread->buffers[num], packet);
         SDL_UnlockMutex(thread->locks[num]);
     }
@@ -228,7 +241,9 @@ static int _ThreadRead(int num, Kit_DecoderThread *thread, void **packet) {
 
     int ret = 0;
     if(SDL_LockMutex(thread->locks[num]) == 0) {
-        if(packet != NULL) {
+        if(packet == NULL) {
+            Kit_ReadBuffer(thread->buffers[num]);
+        } else {
             *packet = Kit_ReadBuffer(thread->buffers[num]);
             if(*packet == NULL) {
                 ret = 1;

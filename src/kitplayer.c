@@ -82,11 +82,15 @@ error:
 void Kit_ClosePlayer(Kit_Player *player) {
     if(player == NULL) return;
 
-    // Release threads
+    // Release threads. Decoders first, then demuxer to avoid deadlocks
+    for(int i = 0; i < NB_THREAD_TYPES; i++) {
+        Kit_PrepareFreeDecoderThread(&player->dec_threads[i]);
+    }
     Kit_FreeDemuxThread(&player->demux_thread);
     for(int i = 0; i < NB_THREAD_TYPES; i++) {
         Kit_FreeDecoderThread(&player->dec_threads[i]);
     }
+
 
     free(player);
 }
@@ -107,8 +111,6 @@ int Kit_GetVideoData(Kit_Player *player, SDL_Texture *texture) {
     if(player->state == KIT_STOPPED) {
         return 0;
     }
-
-    fprintf(stderr, "Kit_GetVideoData\n");
 
     return Kit_GetVideoDecoderData(player->dec_threads[THREAD_VIDEO], player->clock_sync, texture);
 }
@@ -190,8 +192,6 @@ int Kit_GetAudioData(Kit_Player *player, unsigned char *buffer, int length, int 
     if(player->state == KIT_STOPPED) {
         return 0;
     }
-
-    fprintf(stderr, "Kit_GetAudioData\n");
 
     return Kit_GetAudioDecoderData(player->dec_threads[THREAD_AUDIO], player->clock_sync, buffer, length, cur_buf_len);
 }
