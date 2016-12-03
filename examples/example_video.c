@@ -44,6 +44,41 @@ void render_gui(SDL_Renderer *renderer, double percent) {
     SDL_RenderFillRect(renderer, &progress_top);
 }
 
+cached_file * cache_file(char * url) {
+	cached_file * cf;
+	FILE * fp = fopen(url,"rb");
+	size_t err;
+	if(fp == NULL) {
+		fprintf(stderr,"cache_file(\"%s\"): failed to fopen(\"%s\",\"rb\"\n",url,url);
+		return NULL;
+	}
+	cf = malloc(sizeof(cached_file));
+	if(cf == NULL) {
+		fprintf(stderr,"cache_file(\"%s\"): failed to malloc cf\n",url);
+		return NULL;
+	}
+	fseek(fp,0,SEEK_END);
+	cf->filesize = ftell(fp);
+	fseek(fp,0,SEEK_SET);
+	cf->file_pointer = malloc(cf->filesize);
+	if(cf->file_pointer == NULL) {
+		fprintf(stderr,"cache_file(\"%s\"): failed to malloc cf->file_pointer\n",url);
+		return NULL;
+	}
+	err = fread(cf->file_pointer,cf->filesize,1,fp);
+	if(!err) {
+		fprintf(stderr,"cache_file(\"%s\"): failed to fread the file\n",url);
+		return NULL;
+	}
+	fclose(fp);
+	return cf;
+}
+
+void properly_close_cached_file(cached_file * cf) {
+	free(cf->file_pointer);
+	free(cf);
+}
+
 int main(int argc, char *argv[]) {
     int err = 0, ret = 0;
     const char* filename = NULL;
@@ -114,7 +149,13 @@ int main(int argc, char *argv[]) {
 
     // Open up the sourcefile.
     // This can be a local file, network url, ...
-    src = Kit_CreateSourceFromUrl(filename);
+    cached_file * cf = cache_file(filename);
+    if(cf == NULL) {
+		fputs("main: quitting\n",stderr);
+		goto quit;
+	}
+    src = Kit_CreateSourceFromMemory(cf);
+//    src = Kit_CreateSourceFromUrl(filename);
     if(src == NULL) {
         fprintf(stderr, "Unable to load file '%s': %s\n", filename, Kit_GetError());
         return 1;
@@ -330,7 +371,8 @@ int main(int argc, char *argv[]) {
         // Render to screen + wait for vsync
         SDL_RenderPresent(renderer);
     }
-
+    properly_close_cached_file(cf);
+quit:
     SDL_DestroyTexture(video_tex);
     SDL_CloseAudioDevice(audio_dev);
 

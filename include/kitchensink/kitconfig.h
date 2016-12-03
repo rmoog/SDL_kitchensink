@@ -1,6 +1,6 @@
 #ifndef KITCONFIG_H
 #define KITCONFIG_H
-
+#include <stdlib.h>
 #if defined _WIN32 || defined __CYGWIN__
     #define KIT_DLL_IMPORT __declspec(dllimport)
     #define KIT_DLL_EXPORT __declspec(dllexport)

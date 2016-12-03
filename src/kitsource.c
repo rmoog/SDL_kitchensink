@@ -9,6 +9,49 @@
 #include <string.h>
 #include <assert.h>
 
+Kit_Source* Kit_CreateSourceFromMemory(cached_file * cf) {
+    Kit_Source *src = calloc(1, sizeof(Kit_Source));
+    if(src == NULL) {
+        Kit_SetError("Unable to allocate source");
+        return NULL;
+    }
+
+    // Attempt to open source
+	AVFormatContext * avFormat = avformat_alloc_context();
+	avFormat->pb = avio_alloc_context(	cf->file_pointer,
+										cf->filesize,
+										0,
+										NULL,
+										NULL,
+										NULL,
+										NULL);
+	if(avformat_open_input(&avFormat,"dummyFilename", NULL,NULL) < 0) {
+        Kit_SetError("Unable to open source Url");
+        goto exit_0;
+    }
+
+    av_opt_set_int(src->format_ctx, "probesize", INT_MAX, 0);
+    av_opt_set_int(src->format_ctx, "analyzeduration", INT_MAX, 0);
+
+    // Fetch stream information. This may potentially take a while.
+    if(avformat_find_stream_info((AVFormatContext *)src->format_ctx, NULL) < 0) {
+        Kit_SetError("Unable to fetch source information");
+        goto exit_1;
+    }
+
+    // Find best streams for defaults
+    src->astream_idx = Kit_GetBestSourceStream(src, KIT_STREAMTYPE_AUDIO);
+    src->vstream_idx = Kit_GetBestSourceStream(src, KIT_STREAMTYPE_VIDEO);
+    src->sstream_idx = Kit_GetBestSourceStream(src, KIT_STREAMTYPE_SUBTITLE);
+    return src;
+
+exit_1:
+    avformat_close_input((AVFormatContext **)&src->format_ctx);
+exit_0:
+    free(src);
+    return NULL;
+}
+
 Kit_Source* Kit_CreateSourceFromUrl(const char *url) {
     assert(url != NULL);
 

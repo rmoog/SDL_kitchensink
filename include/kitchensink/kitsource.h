@@ -31,7 +31,13 @@ typedef struct Kit_Stream {
     Kit_StreamType type; ///< Stream type
 } Kit_StreamInfo;
 
+typedef struct cached_file {
+	unsigned char * file_pointer;
+	size_t filesize;
+} cached_file;
+
 KIT_API Kit_Source* Kit_CreateSourceFromUrl(const char *path);
+KIT_API Kit_Source* Kit_CreateSourceFromMemory(cached_file * cf);
 KIT_API void Kit_CloseSource(Kit_Source *src);
 
 KIT_API int Kit_GetSourceStreamInfo(const Kit_Source *src, Kit_StreamInfo *info, int index);
